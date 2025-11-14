@@ -1,3 +1,9 @@
+<div align="center">
+  
+<img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/c14e0783-541c-4f6e-84af-0560876480ee" />
+
+</div>
+
 # Prerequisites
 
 ## Technical Knowledge Required
