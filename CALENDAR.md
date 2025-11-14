@@ -1,3 +1,9 @@
+<div align="center">
+  
+<img width="150" height="150" alt="image" src="https://github.com/user-attachments/assets/23dc2163-9975-4734-9bad-ec7ca88dd9d4" />
+
+</div>
+
 # Course Calendar
 
 ## Session Schedule
