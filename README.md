@@ -4,13 +4,19 @@
 
 # Agentic AI Systems Masterclass: From LLM Chaos to Deterministic Workflows
 
-[![Course Status](https://img.shields.io/badge/Status-Enrolling%20Now-brightgreen?style=for-the-badge)](https://github.com/Javihaus/agents_observability_bootcamp#enrollment)
+
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
+![Anthropic Claude](https://img.shields.io/badge/Claude-Sonnet%204-191919?style=for-the-badge&logo=anthropic&logoColor=white)
+![Google Colab](https://img.shields.io/badge/Google%20Colab-Notebooks-F9AB00?style=for-the-badge&logo=google-colab&logoColor=white)
+![Jupyter](https://img.shields.io/badge/Jupyter-Notebooks-F37626?style=for-the-badge&logo=jupyter&logoColor=white)
 [![LangChain](https://img.shields.io/badge/LangChain-0.1.0-1C3C3C?style=for-the-badge)](https://langchain.com)
 [![License](https://img.shields.io/badge/License-Apache%202.0-yellow?style=for-the-badge)](LICENSE)
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/YOUR_INVITE)
+
+[![Course Status](https://img.shields.io/badge/Status-Enrolling%20Now-brightgreen?style=for-the-badge)](https://github.com/Javihaus/agents_observability_bootcamp#enrollment)
 [![Enroll Now](https://img.shields.io/badge/Enroll%20Now-Limited%20Spots%20Available-ff6b6b?style=for-the-badge)](https://github.com/Javihaus/agents_observability_bootcamp#enrollment)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/YOUR_INVITE)
+
 [![Email](https://img.shields.io/badge/Email-javier%40jmarin.info-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:javier@jmarin.info)
 ___
 </div>
