@@ -12,10 +12,13 @@
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/YOUR_INVITE)
 [![Enroll Now](https://img.shields.io/badge/Enroll%20Now-Limited%20Spots%20Available-ff6b6b?style=for-the-badge)](https://github.com/Javihaus/agents_observability_bootcamp#enrollment)
 [![Email](https://img.shields.io/badge/Email-javier%40jmarin.info-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:javier@jmarin.info)
-
+___
 </div>
 
+
+
 <img width="70" height="70" alt="image" src="https://github.com/user-attachments/assets/f7d72454-5fa4-4a14-9201-67a0259b4cbc" />
+
 
 ## Course Overview
 
@@ -44,8 +47,10 @@ Companies deploying agentic AI systems face systematic challenges: unpredictable
 - Build validation rubrics for continuous improvement
 - Prepare systems for EU AI Act compliance
 
+___
 
 <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/c14e0783-541c-4f6e-84af-0560876480ee" />
+
 ## Prerequisites
 
 ### Technical Requirements
@@ -63,9 +68,10 @@ Companies deploying agentic AI systems face systematic challenges: unpredictable
 - Homework: 2-3 hours per chapter
 - Final project: 4-6 hours
 
-
+___
 
 <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/23dc2163-9975-4734-9bad-ec7ca88dd9d4" />
+
 ## Course Schedule
 
 Total duration: 6 hours across 3 days
@@ -84,9 +90,10 @@ Total duration: 6 hours across 3 days
 
 See [CALENDAR.md](CALENDAR.md) for specific dates and times.
 
-
+___
 
 <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/47af1986-5798-48fd-85dc-5c782f83327d" />
+
 ## Setup Instructions
 
 Before the first session, complete all setup steps:
@@ -98,9 +105,10 @@ Before the first session, complete all setup steps:
 5. **Verify Setup**: Run [setup/04_verify_setup.ipynb](setup/04_verify_setup.ipynb)
 
 
-
+___
 
 <img width="80" height="80" alt="image" src="https://github.com/user-attachments/assets/16a77bf6-af29-4813-861a-01f63d59d068" />
+
 ## Repository Structure
 ```
 ├── setup/                    # Pre-course setup guides
@@ -132,9 +140,10 @@ All notebooks are designed for Google Colab. To open any notebook in Colab:
 Alternatively, click the "Open in Colab" badge at the top of each notebook.
 
 
-
+___
 
 <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/a25a3b33-0677-40ca-b304-d8b829f082d0" />
+
 ## Final Project
 
 Students will audit and redesign an existing agentic system (either their own production system or a provided case study). The final project demonstrates:
@@ -147,9 +156,10 @@ Students will audit and redesign an existing agentic system (either their own pr
 See [final_project/project_brief.md](final_project/project_brief.md) for complete requirements.
 
 
-
+___
 
 <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/dac697bd-286a-4a0f-88fc-2ca52b454516" />
+
 ## About the Instructor
 
 **Javier Marin** is an independent AI systems consultant specializing in production ML deployment and EU AI Act compliance. He has published research in IEEE DSAA on Hamiltonian neural networks, conducted safety research on LLM medical triage systems, and advised venture-backed startups on ML implementation.
@@ -162,7 +172,7 @@ Areas of expertise:
 
 Contact: javier@jmarin.info
 
-
+___
 
 
 <img width="80" height="123" alt="image" src="https://github.com/user-attachments/assets/cc04fe4b-ac6b-4279-aef9-d6355f5d639e" />
