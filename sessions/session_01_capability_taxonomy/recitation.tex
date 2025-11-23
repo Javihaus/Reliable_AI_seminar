@@ -1,0 +1,329 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+\definecolor{success}{RGB}{0,153,0}
+
+\newtcolorbox{keyinsight}{
+  colback=blue!5!white,
+  colframe=keypoint,
+  title=Key Insight,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{warningbox}{
+  colback=red!5!white,
+  colframe=warning,
+  title=Warning,
+  fonttitle=\bfseries
+}
+
+\title{\textbf{Session 1: Taxonomy of LLM Capabilities}\\
+\large Pattern Matching vs Systematic Reasoning}
+\author{Production LLM Deployment: Risk Characterization Before Failure\\
+Instructor: Javier Mar\'in}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This recitation establishes the foundational framework for classifying LLM capabilities. We distinguish between tasks that current architectures handle reliably versus those that fail predictably, providing decision criteria for deployment assessment. Understanding this taxonomy is essential before investing engineering resources in any LLM application.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction: The Benchmark Fallacy}
+
+Organizations deploy large language models assuming that benchmark performance predicts production reliability. This assumption causes catastrophic failures.
+
+\begin{warningbox}
+\textbf{The Core Problem:} Benchmarks measure pattern recognition on test distributions. Production systems encounter novel combinations, edge cases, and adversarial inputs that expose fundamental architectural limitations.
+\end{warningbox}
+
+Consider a medical triage system achieving 94\% accuracy on benchmark questions. In production, the same system:
+\begin{itemize}
+    \item Fails on temporal constraint reasoning (medication timing)
+    \item Shows 62.5 percentage point accuracy drops from prompt format changes
+    \item Exhibits 100\% false positive rates for certain action recommendations
+\end{itemize}
+
+These are not ``bugs to fix'' but \textbf{architectural limitations} that no amount of prompt engineering or fine-tuning will resolve.
+
+\section{Capability Classes}
+
+We define six capability classes based on architectural prerequisites:
+
+\subsection{Class 1: Pattern Completion}
+
+\textbf{Definition:} Tasks where the output is a high-probability continuation of input patterns seen during training.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Text completion and summarization
+    \item Code completion for common patterns
+    \item Translation between high-resource languages
+    \item Formatting and style transfer
+\end{itemize}
+
+\textbf{Reliability:} \textcolor{success}{HIGH} --- This is what transformers were designed for.
+
+\begin{keyinsight}
+Pattern completion works because the model has seen millions of similar examples. The ``reasoning'' is pattern matching against training data, not logical inference.
+\end{keyinsight}
+
+\subsection{Class 2: Knowledge Retrieval}
+
+\textbf{Definition:} Tasks requiring recall of factual information encoded during pretraining.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Answering factual questions (``What is the capital of France?'')
+    \item Explaining concepts covered in training data
+    \item Providing definitions and descriptions
+\end{itemize}
+
+\textbf{Reliability:} \textcolor{orange}{MEDIUM} --- Depends heavily on training data coverage.
+
+\textbf{Failure Modes:}
+\begin{itemize}
+    \item Hallucination for facts outside training distribution
+    \item Confidence-competence gap: higher confidence on incorrect answers as models scale
+    \item Temporal knowledge cutoff issues
+\end{itemize}
+
+\subsection{Class 3: Compositional Reasoning}
+
+\textbf{Definition:} Tasks requiring systematic combination of learned primitives in novel ways.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Multi-step mathematical proofs
+    \item Novel algorithm design
+    \item Logical deduction chains
+\end{itemize}
+
+\textbf{Reliability:} \textcolor{warning}{LOW} --- LLMs lack systematic compositional generalization.
+
+\begin{keyinsight}
+Lake \& Baroni (2018) demonstrated that sequence-to-sequence models fail to generalize compositionally. They learn correlations, not composable rules. This remains true for modern LLMs.
+\end{keyinsight}
+
+\subsection{Class 4: Continuous State Representation}
+
+\textbf{Definition:} Tasks requiring internal maintenance of continuous quantities that evolve over time.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Temporal constraint satisfaction (scheduling, timing)
+    \item Physical simulation and prediction
+    \item Dynamic system modeling
+\end{itemize}
+
+\textbf{Reliability:} \textcolor{warning}{VERY LOW} --- Discrete tokens cannot represent continuous states.
+
+\textbf{Evidence:} Our experiments show bimodal performance distributions, extreme prompt brittleness (62.5pp drops), and systematic action bias (100\% false positive rates) on temporal tasks.
+
+\subsection{Class 5: Constraint Satisfaction}
+
+\textbf{Definition:} Tasks requiring simultaneous satisfaction of multiple hard constraints.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Scheduling with complex dependencies
+    \item Resource allocation problems
+    \item Compliance verification
+\end{itemize}
+
+\textbf{Reliability:} \textcolor{warning}{LOW} --- LLMs approximate solutions rather than guarantee constraint satisfaction.
+
+\subsection{Class 6: Interactive Collaboration}
+
+\textbf{Definition:} Tasks requiring real-time back-and-forth interaction with humans.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Pair programming
+    \item Collaborative writing
+    \item Real-time decision support
+\end{itemize}
+
+\textbf{Reliability:} \textcolor{orange}{MEDIUM} --- Depends on latency constraints.
+
+\textbf{Critical Finding:} Response latency creates bandwidth degradation from 7.43 to 3.28 turns/minute (56\% drop) at 10-second delays. This is not about response quality---it's a fundamental interaction constraint.
+
+\section{The Capability Classification Matrix}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Capability Class} & \textbf{Reliability} & \textbf{Hybrid Needed?} & \textbf{Testing Priority} \\
+\midrule
+Pattern Completion & High & No & Low \\
+Knowledge Retrieval & Medium & Sometimes (RAG) & Medium \\
+Compositional Reasoning & Low & Yes & High \\
+Continuous State & Very Low & Yes & Critical \\
+Constraint Satisfaction & Low & Yes & High \\
+Interactive Collaboration & Medium & Latency-dependent & Medium \\
+\bottomrule
+\end{tabular}
+\caption{Capability classification with deployment implications}
+\end{table}
+
+\section{Decision Framework}
+
+For any deployment scenario, answer these questions:
+
+\subsection{Question 1: What capability class does my task require?}
+
+Map your task to one or more capability classes. Most real-world tasks combine multiple classes.
+
+\textbf{Example:} Medical triage chatbot
+\begin{itemize}
+    \item Pattern completion: Understanding natural language symptoms
+    \item Knowledge retrieval: Medical knowledge
+    \item Continuous state: Temporal medication constraints
+    \item Constraint satisfaction: Drug interaction rules
+\end{itemize}
+
+\subsection{Question 2: What are the stakes of failure?}
+
+\begin{itemize}
+    \item \textbf{Low stakes:} Content generation, summarization, drafting
+    \item \textbf{Medium stakes:} Customer service, information retrieval
+    \item \textbf{High stakes:} Medical, financial, legal, safety-critical
+\end{itemize}
+
+\begin{warningbox}
+High-stakes applications requiring Class 3-5 capabilities almost always need hybrid architectures. Pure LLM deployment is not appropriate.
+\end{warningbox}
+
+\subsection{Question 3: What testing is required?}
+
+Based on capability classes involved:
+\begin{enumerate}
+    \item \textbf{Brittleness testing:} Multi-format prompt variations
+    \item \textbf{Bias testing:} False positive/negative rate measurement
+    \item \textbf{Scaling analysis:} Confidence-competence gap assessment
+    \item \textbf{Temporal testing:} Constraint satisfaction verification
+    \item \textbf{Latency testing:} Interaction bandwidth measurement
+\end{enumerate}
+
+\section{Case Studies}
+
+\subsection{Case Study 1: Code Generation}
+
+\textbf{Task:} Generate Python functions from natural language descriptions.
+
+\textbf{Capability Analysis:}
+\begin{itemize}
+    \item Primary: Pattern completion (HIGH reliability for common patterns)
+    \item Secondary: Compositional reasoning (LOW reliability for novel algorithms)
+\end{itemize}
+
+\textbf{Deployment Decision:} Safe for code assistance with human review. Not safe for autonomous code generation in safety-critical systems.
+
+\subsection{Case Study 2: Medical Symptom Triage}
+
+\textbf{Task:} Recommend emergency vs routine care based on symptoms.
+
+\textbf{Capability Analysis:}
+\begin{itemize}
+    \item Knowledge retrieval: Medical symptom patterns (MEDIUM)
+    \item Continuous state: Symptom duration and timing (VERY LOW)
+    \item Constraint satisfaction: Contraindication rules (LOW)
+\end{itemize}
+
+\textbf{Deployment Decision:} Requires hybrid architecture with explicit temporal constraint checker and rule-based verification module.
+
+\subsection{Case Study 3: Financial Document Analysis}
+
+\textbf{Task:} Extract and validate financial metrics from reports.
+
+\textbf{Capability Analysis:}
+\begin{itemize}
+    \item Pattern completion: Document parsing (HIGH)
+    \item Knowledge retrieval: Financial terminology (MEDIUM)
+    \item Constraint satisfaction: Regulatory compliance (LOW)
+\end{itemize}
+
+\textbf{Deployment Decision:} LLM for extraction, separate validation module for compliance checking.
+
+\section{Practical Exercise}
+
+\textbf{Exercise 1.1: Classify Your Deployment Scenario}
+
+For your intended LLM deployment:
+
+\begin{enumerate}
+    \item Describe the task in 2-3 sentences
+    \item List all capability classes required
+    \item Rate each class: High/Medium/Low/Very Low reliability
+    \item Identify the ``weakest link'' capability
+    \item Determine if hybrid architecture is needed
+    \item Specify what testing is required
+\end{enumerate}
+
+\textbf{Template:}
+
+\begin{tcolorbox}
+\textbf{Deployment Scenario:} [Your description]
+
+\textbf{Capability Classes Required:}
+\begin{itemize}
+    \item Pattern Completion: [Yes/No] - Reliability: [ ]
+    \item Knowledge Retrieval: [Yes/No] - Reliability: [ ]
+    \item Compositional Reasoning: [Yes/No] - Reliability: [ ]
+    \item Continuous State: [Yes/No] - Reliability: [ ]
+    \item Constraint Satisfaction: [Yes/No] - Reliability: [ ]
+    \item Interactive Collaboration: [Yes/No] - Reliability: [ ]
+\end{itemize}
+
+\textbf{Weakest Link:} [Capability class with lowest reliability]
+
+\textbf{Hybrid Architecture Needed:} [Yes/No]
+
+\textbf{Testing Required:} [List specific tests]
+\end{tcolorbox}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item \textbf{Not all tasks are equal.} LLMs excel at pattern completion but fail at continuous state representation and compositional reasoning.
+
+    \item \textbf{Benchmarks lie.} High benchmark scores do not predict production reliability for tasks requiring capabilities beyond pattern matching.
+
+    \item \textbf{Classify before building.} Understanding capability requirements prevents wasted engineering effort on fundamentally unsuitable applications.
+
+    \item \textbf{Hybrid architectures are often necessary.} For high-stakes applications requiring Class 3-5 capabilities, pure LLM deployment is inappropriate.
+
+    \item \textbf{Testing must match capability class.} Different failure modes require different testing protocols.
+\end{enumerate}
+
+\section{Reading for Next Session}
+
+\begin{itemize}
+    \item Lake, B. M., \& Baroni, M. (2018). ``Generalization without systematicity: On the compositional skills of sequence-to-sequence recurrent networks.'' \textit{ICML}.
+    \item Sections 1-3 of the course textbook on architectural prerequisites
+\end{itemize}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{Session 1 of 12 --- Production LLM Deployment: Risk Characterization Before Failure}
+
+\end{document}
