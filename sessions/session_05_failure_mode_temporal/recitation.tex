@@ -1,0 +1,359 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+\definecolor{success}{RGB}{0,153,0}
+
+\newtcolorbox{keyinsight}{
+  colback=blue!5!white,
+  colframe=keypoint,
+  title=Key Insight,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{warningbox}{
+  colback=red!5!white,
+  colframe=warning,
+  title=Critical Finding,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{empirical}{
+  colback=green!5!white,
+  colframe=success,
+  title=Empirical Result,
+  fonttitle=\bfseries
+}
+
+\title{\textbf{Session 5: Temporal Constraint Processing}\\
+\large Why Discrete Tokens Fail for Continuous State}
+\author{Production LLM Deployment: Risk Characterization Before Failure\\
+Instructor: Javier Mar\'in}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This recitation examines the fundamental failure of LLMs on temporal constraint processing tasks. We present empirical evidence showing bimodal performance distributions, extreme prompt brittleness, and systematic action bias. These failures stem from architectural limitations: discrete token representations cannot maintain continuous temporal state. We introduce Allen's interval algebra as the foundation for hybrid temporal reasoning systems.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{The Temporal Constraint Problem}
+
+Many high-stakes applications require temporal reasoning:
+\begin{itemize}
+    \item Medical: Medication timing, symptom duration
+    \item Financial: Trading windows, settlement periods
+    \item Scheduling: Meeting conflicts, resource allocation
+    \item Emergency Response: Time-critical interventions
+\end{itemize}
+
+\begin{warningbox}
+\textbf{Core Finding:} LLMs exhibit bimodal performance, extreme brittleness (62.5 percentage point accuracy drops), and systematic action bias (100\% false positive rates) on temporal constraint tasks. These are not bugs---they are architectural limitations.
+\end{warningbox}
+
+\section{Empirical Evidence}
+
+\subsection{Bimodal Performance Distribution}
+
+Our experiments across 8 LLMs reveal a striking pattern: performance is bimodal, not continuous.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Parameters} & \textbf{Accuracy} \\
+\midrule
+Phi-2 & 2.7B & 62.5\% \\
+Phi-3 & 3.8B & 62.5\% \\
+Mistral & 7B & 62.5\% \\
+Llama-2 & 7B & 37.5\% \\
+Gemma & 7B & 50.0\% \\
+Llama-3 & 8B & 75.0\% \\
+\bottomrule
+\end{tabular}
+\caption{Temporal constraint accuracy across model sizes}
+\end{table}
+
+\begin{keyinsight}
+Model size does not predict performance. Phi-3 (3.8B) matches Mistral (7B) at 62.5\%, while Llama-2 (7B) fails at 37.5\% (below random chance). The performance distribution is bimodal: models either ``get it'' or they don't.
+\end{keyinsight}
+
+\subsection{Extreme Prompt Brittleness}
+
+Same semantic content, different formats yield dramatically different accuracy:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Format} & \textbf{Accuracy} & \textbf{$\Delta$ from Baseline} \\
+\midrule
+Natural language & 62.5\% & Baseline \\
+Clinical note & 25.0\% & -37.5 pp \\
+JSON structure & 0.0\% & -62.5 pp \\
+Formal specification & 50.0\% & -12.5 pp \\
+\bottomrule
+\end{tabular}
+\caption{Brittleness across prompt formats (same model)}
+\end{table}
+
+\begin{warningbox}
+A 62.5 percentage point accuracy drop from format changes alone demonstrates that the model is pattern matching on surface features, not reasoning about temporal constraints.
+\end{warningbox}
+
+\subsection{Systematic Action Bias}
+
+Models exhibit systematic bias toward recommending actions:
+
+\begin{empirical}
+\textbf{False Positive Rate:} 100\% for action recommendations on balanced test sets.
+
+When tested on scenarios where the correct answer is ``do not take action,'' models recommend action 100\% of the time. This is not occasional error---it is systematic bias.
+\end{empirical}
+
+\section{Why Discrete Tokens Fail}
+
+\subsection{The Representation Problem}
+
+LLMs process discrete tokens, but temporal reasoning requires:
+\begin{enumerate}
+    \item \textbf{Continuous magnitude representation:} ``4 hours'' as a quantity, not a symbol
+    \item \textbf{State maintenance:} Tracking elapsed time through inference
+    \item \textbf{Constraint propagation:} Updating all related constraints when one changes
+\end{enumerate}
+
+\begin{keyinsight}
+Discrete tokens can \textit{represent} temporal statements but cannot \textit{process} temporal constraints. The string ``4 hours'' has no inherent temporal semantics in a token embedding.
+\end{keyinsight}
+
+\subsection{Biological Contrast}
+
+Biological systems that solve temporal problems have specialized mechanisms:
+
+\begin{itemize}
+    \item \textbf{Hippocampal time cells:} Neurons that fire at specific temporal intervals
+    \item \textbf{Cerebellar timing circuits:} Precise sub-second timing for motor control
+    \item \textbf{Interval timing circuits:} Dopaminergic systems for seconds-to-minutes timing
+\end{itemize}
+
+These are dedicated computational mechanisms, not pattern matching on temporal language.
+
+\section{Allen's Interval Algebra}
+
+James Allen (1983) defined 13 basic relations between temporal intervals:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcl}
+\toprule
+\textbf{Relation} & \textbf{Symbol} & \textbf{Example} \\
+\midrule
+Before & $<$ & Meeting A ends before B starts \\
+After & $>$ & Meeting B starts after A ends \\
+Meets & m & A ends exactly when B starts \\
+Met-by & mi & B starts exactly when A ends \\
+Overlaps & o & A starts before B but ends during B \\
+Overlapped-by & oi & B starts before A but ends during A \\
+During & d & A is entirely within B \\
+Contains & di & A entirely contains B \\
+Starts & s & A and B start together, A ends first \\
+Started-by & si & A and B start together, B ends first \\
+Finishes & f & A and B end together, A starts later \\
+Finished-by & fi & A and B end together, B starts later \\
+Equals & $=$ & A and B are identical \\
+\bottomrule
+\end{tabular}
+\caption{Allen's 13 interval relations}
+\end{table}
+
+\subsection{Why Allen's Algebra Works}
+
+Allen's algebra provides:
+\begin{enumerate}
+    \item \textbf{Discrete symbolic representation:} Intervals and relations, not continuous time
+    \item \textbf{Constraint propagation:} Known relations constrain unknown ones
+    \item \textbf{Guaranteed consistency:} Detects impossible constraint sets
+    \item \textbf{Deterministic computation:} Same inputs always yield same outputs
+\end{enumerate}
+
+\section{Hybrid Architecture: LLM + Temporal Constraint Checker}
+
+\subsection{Architecture Design}
+
+\begin{algorithm}
+\caption{Hybrid Temporal Reasoning}
+\begin{algorithmic}[1]
+\State \textbf{Input:} Natural language scenario
+\State \textbf{Output:} Valid/Invalid + Explanation
+\State
+\State \texttt{// LLM: Extract temporal information}
+\State $entities \gets \text{LLM.extract\_entities}(scenario)$
+\State $constraints \gets \text{LLM.extract\_constraints}(scenario)$
+\State
+\State \texttt{// Symbolic: Convert to Allen relations}
+\State $intervals \gets \text{parse\_intervals}(entities)$
+\State $relations \gets \text{to\_allen\_relations}(constraints)$
+\State
+\State \texttt{// Symbolic: Constraint propagation}
+\State $result \gets \text{propagate\_constraints}(intervals, relations)$
+\State
+\State \texttt{// Return deterministic result}
+\If{$result.consistent$}
+    \State \Return ``Valid: constraints satisfied''
+\Else
+    \State \Return ``Invalid: '' + $result.violations$
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Component Responsibilities}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Responsibility} \\
+\midrule
+LLM & Natural language understanding \\
+LLM & Entity and constraint extraction \\
+LLM & Generating human-readable explanations \\
+\midrule
+Symbolic & Temporal interval representation \\
+Symbolic & Constraint propagation \\
+Symbolic & Consistency checking \\
+Symbolic & Violation detection \\
+\bottomrule
+\end{tabular}
+\caption{Division of labor in hybrid architecture}
+\end{table}
+
+\section{Implementation: Allen's Algebra in Python}
+
+\begin{verbatim}
+class TemporalInterval:
+    def __init__(self, name: str, start: float, end: float):
+        self.name = name
+        self.start = start
+        self.end = end
+
+    def relation_to(self, other: 'TemporalInterval') -> str:
+        """Compute Allen relation between self and other."""
+        if self.end < other.start:
+            return 'before'
+        elif self.end == other.start:
+            return 'meets'
+        elif self.start < other.start < self.end < other.end:
+            return 'overlaps'
+        elif self.start == other.start and self.end < other.end:
+            return 'starts'
+        elif other.start < self.start and self.end < other.end:
+            return 'during'
+        elif self.start < other.start and other.end < self.end:
+            return 'contains'
+        elif self.start == other.start and self.end == other.end:
+            return 'equals'
+        # ... (remaining relations)
+
+
+def check_medication_constraint(
+    med_a_time: float,
+    med_b_time: float,
+    min_interval: float
+) -> bool:
+    """Check if medication B is safe given A and minimum interval."""
+    elapsed = med_b_time - med_a_time
+    return elapsed >= min_interval
+\end{verbatim}
+
+\section{Testing Protocol for Temporal Tasks}
+
+\subsection{Test Design Requirements}
+
+\begin{enumerate}
+    \item \textbf{Balanced distribution:} Equal positive/negative cases
+    \item \textbf{Multi-format testing:} Same scenario in 4+ formats
+    \item \textbf{Boundary cases:} Exactly at constraint threshold
+    \item \textbf{Negative testing:} Scenarios where action is unsafe
+\end{enumerate}
+
+\subsection{Metrics to Collect}
+
+\begin{itemize}
+    \item \textbf{Accuracy:} Overall correct responses
+    \item \textbf{False Positive Rate:} Recommending unsafe actions
+    \item \textbf{False Negative Rate:} Missing safe opportunities
+    \item \textbf{Brittleness:} Percentage point change across formats
+    \item \textbf{Consistency:} Same answer on repeated queries
+\end{itemize}
+
+\section{Practical Exercise}
+
+\textbf{Exercise 5.1: Temporal Constraint Testing}
+
+Design a test suite for your deployment domain:
+
+\begin{enumerate}
+    \item Identify 3 temporal constraints in your application
+    \item Create 8 test scenarios (4 valid, 4 invalid)
+    \item Write each in 3 different prompt formats
+    \item Run against Claude Sonnet 4.5 and record results
+    \item Calculate accuracy, FPR, and brittleness metrics
+\end{enumerate}
+
+\textbf{Exercise 5.2: Hybrid Architecture Specification}
+
+If your testing reveals temporal failures:
+
+\begin{enumerate}
+    \item Define the temporal intervals in your domain
+    \item List the Allen relations that matter
+    \item Specify LLM responsibilities
+    \item Specify symbolic checker responsibilities
+    \item Design the integration interface
+\end{enumerate}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item \textbf{Temporal reasoning failures are architectural.} Discrete tokens cannot process continuous temporal state.
+
+    \item \textbf{Performance is bimodal.} Models either handle temporal constraints or they don't---there's no middle ground.
+
+    \item \textbf{Brittleness reveals pattern matching.} 62.5pp accuracy drops from format changes prove the model isn't reasoning.
+
+    \item \textbf{Action bias is dangerous.} 100\% false positive rates on ``do nothing'' scenarios can cause harm.
+
+    \item \textbf{Hybrid architectures solve the problem.} Allen's interval algebra provides deterministic temporal reasoning that LLMs cannot.
+\end{enumerate}
+
+\section{Reading for Next Session}
+
+\begin{itemize}
+    \item Mar\'in, J. (2025). ``The Confidence-Competence Gap in Language Model Scaling.'' \textit{arXiv preprint.}
+    \item Kaplan et al. (2020). ``Scaling Laws for Neural Language Models.''
+\end{itemize}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{Session 5 of 12 --- Production LLM Deployment: Risk Characterization Before Failure}
+
+\end{document}
