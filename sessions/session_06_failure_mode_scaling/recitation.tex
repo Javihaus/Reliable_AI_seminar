@@ -1,0 +1,224 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+\definecolor{success}{RGB}{0,153,0}
+
+\newtcolorbox{keyinsight}{
+  colback=blue!5!white,
+  colframe=keypoint,
+  title=Key Insight,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{warningbox}{
+  colback=red!5!white,
+  colframe=warning,
+  title=Critical Finding,
+  fonttitle=\bfseries
+}
+
+\title{\textbf{Session 6: Knowledge Scaling Pathology}\\
+\large The Confidence-Competence Gap}
+\author{Production LLM Deployment: Risk Characterization Before Failure\\
+Instructor: Javier Mar\'in}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This recitation examines the confidence-competence gap: the counterintuitive finding that larger models can become more confident in wrong answers. We quantify this phenomenon, identify task categories where scaling doesn't help, and provide guidance for model size selection in production deployments.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction: The Scaling Promise}
+
+The AI industry operates on an implicit assumption: larger models perform better. Scaling laws support this for many tasks. However, our experiments reveal a dangerous exception.
+
+\begin{warningbox}
+\textbf{The Scaling Trap:} On certain tasks, loss improves 31\% while accuracy stays flat (at or below random chance). Larger models become more confident in wrong answers.
+\end{warningbox}
+
+\section{The Confidence-Competence Gap}
+
+\subsection{Definition}
+
+The Confidence-Competence Gap (CCG) quantifies the relationship between a model's confidence (as measured by loss) and its actual competence (as measured by accuracy):
+
+\[
+CCG = \frac{\partial L / \partial N}{\partial A / \partial N}
+\]
+
+Where:
+\begin{itemize}
+    \item $L$ = loss (lower = more confident)
+    \item $A$ = accuracy (higher = more competent)
+    \item $N$ = model size (parameters)
+\end{itemize}
+
+\subsection{Interpretation}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcl}
+\toprule
+\textbf{CCG Range} & \textbf{Status} & \textbf{Interpretation} \\
+\midrule
+$> 0$ & Healthy & Confidence and competence improve together \\
+$0$ to $-10$ & Mild pathology & Some scaling benefit, proceed with caution \\
+$-10$ to $-50$ & Severe pathology & Scaling increases confident failures \\
+$< -50$ & Critical & Do not scale; architectural limitation \\
+\bottomrule
+\end{tabular}
+\caption{CCG interpretation scale}
+\end{table}
+
+\section{Empirical Evidence}
+
+\subsection{Temporal Constraint Tasks}
+
+Our experiments on temporal constraint reasoning (8 models, 2.7B to 70B parameters):
+
+\begin{itemize}
+    \item Loss improved: 64\% reduction (2.8 to 1.0)
+    \item Accuracy change: +10 percentage points (45\% to 55\%)
+    \item CCG $\approx -48$
+\end{itemize}
+
+\begin{keyinsight}
+A 64\% loss reduction produced only a 10 percentage point accuracy gain on temporal tasks. The CCG of -48 indicates severe pathology: models become much more confident without becoming meaningfully more accurate.
+\end{keyinsight}
+
+\subsection{Comparison Across Task Types}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Task Type} & \textbf{Loss $\Delta$} & \textbf{Accuracy $\Delta$} & \textbf{CCG} \\
+\midrule
+Pattern Completion & -67\% & +35 pp & +0.5 \\
+Knowledge Retrieval & -61\% & +40 pp & +0.7 \\
+Temporal Reasoning & -64\% & +10 pp & -48 \\
+Compositional & -62\% & +12 pp & -38 \\
+\bottomrule
+\end{tabular}
+\caption{Scaling behavior by task type}
+\end{table}
+
+\section{Why Does This Happen?}
+
+\subsection{Loss vs Accuracy}
+
+Loss measures how well the model predicts the next token on its training distribution. Accuracy measures whether the final answer is correct.
+
+These can diverge because:
+\begin{enumerate}
+    \item Training data contains patterns that don't generalize
+    \item Larger models better memorize spurious correlations
+    \item The mapping from correct language to correct answers requires reasoning
+\end{enumerate}
+
+\subsection{The Confidence Trap}
+
+As models scale:
+\begin{enumerate}
+    \item They better fit training data patterns
+    \item Loss decreases (appears more capable)
+    \item Confidence in predictions increases
+    \item But reasoning failures persist
+    \item Result: Confident wrong answers
+\end{enumerate}
+
+\section{Model Size Recommendations}
+
+\subsection{Decision Framework}
+
+\begin{enumerate}
+    \item \textbf{Calculate CCG} for your specific task
+    \item \textbf{Assess accuracy improvement} from scaling
+    \item \textbf{Apply recommendation matrix}
+\end{enumerate}
+
+\subsection{Recommendation Matrix}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{CCG} & \textbf{Accuracy $\Delta$} & \textbf{Recommendation} \\
+\midrule
+$> -5$ & $> 20$ pp & Scale up \\
+$-5$ to $-20$ & $10$--$20$ pp & Moderate scaling \\
+$< -20$ & $< 10$ pp & Don't scale; use hybrid \\
+Any & $< 5$ pp & Architectural limitation \\
+\bottomrule
+\end{tabular}
+\caption{Model size recommendation matrix}
+\end{table}
+
+\section{Practical Exercise}
+
+\textbf{Exercise 6.1: Calculate CCG for Your Task}
+
+\begin{enumerate}
+    \item Test at least 3 model sizes (e.g., 3B, 7B, 70B)
+    \item Record loss and accuracy for each
+    \item Calculate slopes via linear regression
+    \item Compute CCG
+    \item Apply recommendation matrix
+\end{enumerate}
+
+\textbf{Exercise 6.2: Scaling Report}
+
+Document:
+\begin{itemize}
+    \item Model sizes tested
+    \item Loss and accuracy at each size
+    \item CCG calculation with confidence interval
+    \item Visualization of scaling curves
+    \item Final recommendation with justification
+\end{itemize}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item \textbf{Loss improvement doesn't guarantee accuracy improvement.} CCG quantifies this divergence.
+
+    \item \textbf{Scaling pathology is task-dependent.} Pattern completion scales well; temporal reasoning doesn't.
+
+    \item \textbf{Negative CCG means confident failures.} The worst outcome: high-confidence wrong answers.
+
+    \item \textbf{Hybrid beats scaling for pathological tasks.} When CCG $< -20$, invest in hybrid architectures.
+
+    \item \textbf{Always test your specific task.} Don't assume general scaling laws apply.
+\end{enumerate}
+
+\section{Reading for Next Session}
+
+\begin{itemize}
+    \item Review your brittleness measurements from Session 4
+    \item Prepare examples of prompt variations that changed your model's accuracy
+\end{itemize}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{Session 6 of 12 --- Production LLM Deployment: Risk Characterization Before Failure}
+
+\end{document}

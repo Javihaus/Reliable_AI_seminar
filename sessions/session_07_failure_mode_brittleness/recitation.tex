@@ -1,0 +1,100 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+
+\newtcolorbox{keyinsight}{colback=blue!5!white,colframe=keypoint,title=Key Insight,fonttitle=\bfseries}
+\newtcolorbox{warningbox}{colback=red!5!white,colframe=warning,title=Warning,fonttitle=\bfseries}
+
+\title{\textbf{Session 7: Prompt Brittleness}\\
+\large When Robust Understanding Fails}
+\author{Production LLM Deployment\\Instructor: Javier Mar\'in}
+\date{February 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This recitation examines prompt brittleness as a diagnostic for pattern matching vs robust understanding. High brittleness indicates that models are matching surface patterns rather than understanding underlying semantics.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Brittleness as Diagnostic}
+
+\begin{warningbox}
+If a model truly understands a task, its answer should not change based on irrelevant surface features like vocabulary, formatting, or style.
+\end{warningbox}
+
+\subsection{Definition}
+Brittleness = Maximum accuracy - Minimum accuracy across semantically equivalent prompts.
+
+\subsection{Interpretation Scale}
+\begin{table}[h]
+\centering
+\begin{tabular}{lcl}
+\toprule
+\textbf{Brittleness} & \textbf{Range} & \textbf{Diagnosis} \\
+\midrule
+Low & 0-10 pp & Robust understanding \\
+Moderate & 10-30 pp & Some pattern matching \\
+High & 30-50 pp & Significant pattern matching \\
+Extreme & 50+ pp & Pure surface pattern matching \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Designing Brittleness Tests}
+
+\subsection{Semantic Equivalence}
+All prompt variations must preserve:
+\begin{itemize}
+    \item Core meaning and intent
+    \item All relevant information
+    \item Ground truth answer
+\end{itemize}
+
+\subsection{Format Variations}
+Test across:
+\begin{enumerate}
+    \item Natural language (conversational)
+    \item Formal/technical style
+    \item Structured (JSON, XML)
+    \item Clinical/domain-specific
+    \item Minimal/terse
+\end{enumerate}
+
+\section{Case Studies}
+
+\subsection{Temporal Constraint Testing}
+Our experiments showed 62.5 percentage point accuracy drops from format changes alone on temporal tasks---evidence of surface pattern matching.
+
+\begin{keyinsight}
+High brittleness on temporal tasks confirms that models pattern match on temporal language rather than reasoning about time.
+\end{keyinsight}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item Brittleness reveals pattern matching vs understanding
+    \item Always test multiple semantically equivalent formats
+    \item High brittleness ($>$30pp) indicates architectural limitations
+    \item Report brittleness alongside accuracy in evaluations
+\end{enumerate}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{Session 7 of 12 --- Production LLM Deployment}
+
+\end{document}

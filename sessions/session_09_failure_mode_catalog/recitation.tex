@@ -1,0 +1,99 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+
+\newtcolorbox{keyinsight}{colback=blue!5!white,colframe=keypoint,title=Key Insight,fonttitle=\bfseries}
+
+\title{\textbf{Session 9: Failure Mode Catalog}\\
+\large Complete Taxonomy with Detection Protocols}
+\author{Production LLM Deployment\\Instructor: Javier Mar\'in}
+\date{February 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This recitation provides a complete catalog of LLM failure modes with detection protocols. Use this as a reference for building comprehensive pre-deployment testing suites.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Complete Failure Mode Taxonomy}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Mode} & \textbf{Detection} & \textbf{Key Metric} \\
+\midrule
+Brittleness & Multi-format testing & Max-min accuracy \\
+Action Bias & Balanced test sets & FPR/FNR \\
+Scaling Pathology & Multi-size testing & CCG \\
+Temporal Failure & Allen algebra tests & Constraint accuracy \\
+Latency & Response timing & Turns/minute \\
+Hallucination & Fact verification & Grounding rate \\
+Compositional & Novel combination tests & Generalization accuracy \\
+\bottomrule
+\end{tabular}
+\caption{Failure mode summary}
+\end{table}
+
+\section{Detection Protocols}
+
+\subsection{Brittleness Testing}
+\begin{enumerate}
+    \item Create 3+ format variations per scenario
+    \item Test with identical ground truth
+    \item Calculate max-min accuracy spread
+    \item Threshold: $>$30pp indicates pattern matching
+\end{enumerate}
+
+\subsection{Bias Rate Testing}
+\begin{enumerate}
+    \item Create balanced test sets (50/50 split)
+    \item Calculate FPR and FNR separately
+    \item Check for systematic action bias
+    \item Threshold: $>$20\% FPR is significant
+\end{enumerate}
+
+\section{Testing Suite Structure}
+
+A complete pre-deployment suite includes:
+\begin{enumerate}
+    \item Brittleness tests (all applications)
+    \item Bias tests (action-oriented applications)
+    \item Domain-specific failure tests
+    \item Latency benchmarks (interactive applications)
+    \item Scaling analysis (if model size is a variable)
+\end{enumerate}
+
+\begin{keyinsight}
+Testing is not optional for production deployment. Each failure mode requires its own detection protocol.
+\end{keyinsight}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item Apply the complete taxonomy---don't skip failure modes
+    \item Prioritize based on domain-specific risks
+    \item Document all testing with pass/fail criteria
+    \item Testing results feed into hybrid architecture decisions
+\end{enumerate}
+
+\vspace{1cm}
+\hrule
+\textit{Session 9 of 12 --- Production LLM Deployment}
+
+\end{document}

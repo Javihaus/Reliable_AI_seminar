@@ -1,0 +1,398 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+\definecolor{success}{RGB}{0,153,0}
+
+\newtcolorbox{keyinsight}{
+  colback=blue!5!white,
+  colframe=keypoint,
+  title=Key Insight,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{warningbox}{
+  colback=red!5!white,
+  colframe=warning,
+  title=Warning,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{pattern}{
+  colback=green!5!white,
+  colframe=success,
+  title=Architecture Pattern,
+  fonttitle=\bfseries
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  language=Python
+}
+
+\title{\textbf{Session 10: Hybrid Architecture Design I}\\
+\large LLM + Symbolic Reasoning}
+\author{Production LLM Deployment: Risk Characterization Before Failure\\
+Instructor: Javier Mar\'in}
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This recitation teaches the design of hybrid systems that combine LLMs with explicit symbolic reasoning modules. When testing reveals that pure LLMs fundamentally cannot handle certain tasks reliably, hybrid architectures provide a path forward. We present three core architecture patterns, define component responsibilities, and provide implementation guidance.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{When Hybrid Architectures Are Necessary}
+
+Based on our failure mode analysis from Sessions 5-9, hybrid architectures are required when your application needs:
+
+\begin{itemize}
+    \item \textbf{Deterministic outputs} for safety-critical decisions
+    \item \textbf{Temporal reasoning} with guaranteed constraint satisfaction
+    \item \textbf{Verifiable reasoning} for audit and compliance requirements
+    \item \textbf{Factual accuracy} with low hallucination tolerance
+\end{itemize}
+
+\begin{warningbox}
+\textbf{The Core Principle:} LLMs are excellent at language understanding and generation. They are unreliable for logical inference, temporal math, and constraint satisfaction. Hybrid architectures leverage LLM strengths while compensating for architectural limitations.
+\end{warningbox}
+
+\subsection{Decision Framework}
+
+For any deployment scenario, assess these criteria:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccl}
+\toprule
+\textbf{Requirement} & \textbf{LLM Reliability} & \textbf{Hybrid?} & \textbf{Component Needed} \\
+\midrule
+Temporal reasoning & Very Low & Yes & Temporal Checker \\
+Deterministic output & Low & Yes & Verification Module \\
+Constraint satisfaction & Low & Yes & Constraint Solver \\
+Factual accuracy & Medium & Maybe & RAG System \\
+Natural language only & High & No & LLM sufficient \\
+\bottomrule
+\end{tabular}
+\caption{Hybrid architecture decision matrix}
+\end{table}
+
+\section{Architecture Pattern 1: LLM + Temporal Constraint Checker}
+
+The most common pattern for medical, scheduling, and time-sensitive applications.
+
+\begin{pattern}
+\textbf{Pattern 1: LLM + Temporal Checker}
+\begin{verbatim}
+User Input --> LLM (extract entities) --> Symbolic Checker --> Result
+\end{verbatim}
+
+\textbf{Use when:} Application involves time-based constraints, scheduling, or temporal reasoning.
+\end{pattern}
+
+\subsection{Component Responsibilities}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{LLM Component} & \textbf{Symbolic Component} \\
+\midrule
+Parse natural language input & Store temporal intervals \\
+Extract entities and times & Compute Allen relations \\
+Handle ambiguous expressions & Propagate constraints \\
+Generate explanations & Detect violations \\
+\bottomrule
+\end{tabular}
+\caption{Responsibility division for temporal hybrid}
+\end{table}
+
+\subsection{Implementation Structure}
+
+\begin{algorithm}
+\caption{Hybrid Temporal Reasoning Pipeline}
+\begin{algorithmic}[1]
+\State \textbf{Input:} Natural language scenario $S$
+\State \textbf{Output:} Valid/Invalid with explanation
+\State
+\State \texttt{// Step 1: LLM extracts structured data}
+\State $entities \gets \text{LLM.extract}(S)$
+\State
+\State \texttt{// Step 2: Convert to temporal representation}
+\State $intervals \gets \text{parse\_intervals}(entities)$
+\State $constraints \gets \text{parse\_constraints}(entities)$
+\State
+\State \texttt{// Step 3: Symbolic validation}
+\State $result \gets \text{TemporalChecker.validate}(intervals, constraints)$
+\State
+\State \texttt{// Step 4: Return deterministic result}
+\If{$result.is\_valid$}
+    \State \Return (``Valid'', $result.explanation$)
+\Else
+    \State \Return (``Invalid'', $result.violations$)
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Python Implementation}
+
+\begin{lstlisting}
+class HybridTemporalReasoner:
+    def __init__(self, llm_client, symbolic_checker):
+        self.llm = llm_client
+        self.checker = symbolic_checker
+
+    def reason(self, natural_language_input: str) -> Dict:
+        # Step 1: LLM extracts structured information
+        extracted = self.llm.extract_temporal_info(
+            natural_language_input
+        )
+
+        # Step 2: Symbolic checker validates constraints
+        validation = self.checker.validate(extracted)
+
+        # Step 3: Return deterministic result
+        return {
+            "input": natural_language_input,
+            "extracted": extracted,
+            "is_valid": validation.is_valid,
+            "explanation": validation.explanation
+        }
+\end{lstlisting}
+
+\section{Architecture Pattern 2: LLM + Verification Module}
+
+For applications requiring post-hoc verification of LLM outputs against rules or constraints.
+
+\begin{pattern}
+\textbf{Pattern 2: LLM + Verifier}
+\begin{verbatim}
+User Input --> LLM (generate response) --> Verifier --> Approved/Rejected
+\end{verbatim}
+
+\textbf{Use when:} LLM generates content that must comply with rules, regulations, or safety constraints.
+\end{pattern}
+
+\subsection{Verification Types}
+
+\begin{enumerate}
+    \item \textbf{Rule-based verification:} Check against explicit business rules
+    \item \textbf{Schema validation:} Verify output structure matches requirements
+    \item \textbf{Range checking:} Validate numerical values within bounds
+    \item \textbf{Consistency checking:} Ensure outputs don't contradict each other
+\end{enumerate}
+
+\subsection{Implementation Example}
+
+\begin{lstlisting}
+class ComplianceVerifier:
+    def __init__(self):
+        self.rules = []
+
+    def add_rule(self, name: str, check_fn, error_msg: str):
+        self.rules.append({
+            "name": name,
+            "check": check_fn,
+            "error_msg": error_msg
+        })
+
+    def validate(self, data: Dict) -> ValidationResult:
+        violations = []
+
+        for rule in self.rules:
+            if not rule["check"](data):
+                violations.append(
+                    f"{rule['name']}: {rule['error_msg']}"
+                )
+
+        return ValidationResult(
+            is_valid=len(violations) == 0,
+            violations=violations
+        )
+\end{lstlisting}
+
+\section{Architecture Pattern 3: LLM + Retrieval (RAG)}
+
+For applications requiring factual grounding to reduce hallucination.
+
+\begin{pattern}
+\textbf{Pattern 3: RAG (Retrieval-Augmented Generation)}
+\begin{verbatim}
+User Query --> Retriever --> Context --> LLM (with context) --> Response
+\end{verbatim}
+
+\textbf{Use when:} Factual accuracy is critical and information may be outside training data.
+\end{pattern}
+
+\subsection{RAG Components}
+
+\begin{enumerate}
+    \item \textbf{Document Store:} Indexed collection of authoritative documents
+    \item \textbf{Retriever:} Vector similarity or keyword search
+    \item \textbf{Reranker:} Optional relevance scoring
+    \item \textbf{LLM:} Generates answer grounded in retrieved context
+\end{enumerate}
+
+\begin{keyinsight}
+RAG reduces hallucination by providing the LLM with relevant context, but does not eliminate it. The LLM may still misinterpret or ignore the provided context. Always verify critical facts through additional mechanisms.
+\end{keyinsight}
+
+\section{Component Responsibility Matrix}
+
+Clear separation of concerns is essential for maintainable hybrid systems.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Task} & \textbf{LLM} & \textbf{Symbolic} \\
+\midrule
+Natural language understanding & \checkmark & \\
+Entity extraction & \checkmark & \\
+Ambiguity resolution & \checkmark & \\
+Human-readable explanations & \checkmark & \\
+\midrule
+Temporal arithmetic & & \checkmark \\
+Constraint propagation & & \checkmark \\
+Deterministic validation & & \checkmark \\
+Consistency checking & & \checkmark \\
+Audit logging & & \checkmark \\
+\bottomrule
+\end{tabular}
+\caption{Complete responsibility matrix}
+\end{table}
+
+\section{Interface Design}
+
+\subsection{LLM to Symbolic Interface}
+
+The interface between LLM and symbolic components must be:
+
+\begin{enumerate}
+    \item \textbf{Structured:} Use JSON or typed objects, not free text
+    \item \textbf{Validated:} Check for required fields and valid values
+    \item \textbf{Versioned:} Support schema evolution
+    \item \textbf{Logged:} Record all exchanges for debugging
+\end{enumerate}
+
+\subsection{Error Handling at Interfaces}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Error Type} & \textbf{Handling Strategy} \\
+\midrule
+LLM extraction failure & Ask user for clarification \\
+Invalid extracted values & Validate and request correction \\
+Constraint violation & Return violation details \\
+Timeout & Retry with backoff \\
+Inconsistent state & Log and alert \\
+\bottomrule
+\end{tabular}
+\caption{Error handling strategies}
+\end{table}
+
+\section{Testing Hybrid Systems}
+
+\subsection{Testing Levels}
+
+\begin{enumerate}
+    \item \textbf{Unit tests:} Test LLM extraction and symbolic components separately
+    \item \textbf{Integration tests:} Test the full pipeline end-to-end
+    \item \textbf{Adversarial tests:} Test with edge cases and malformed inputs
+    \item \textbf{Regression tests:} Ensure changes don't break existing functionality
+\end{enumerate}
+
+\subsection{Key Metrics}
+
+\begin{itemize}
+    \item \textbf{Extraction accuracy:} Does LLM correctly extract required fields?
+    \item \textbf{Validation coverage:} Are all constraints being checked?
+    \item \textbf{End-to-end accuracy:} Does the system give correct final answers?
+    \item \textbf{Latency:} Is response time acceptable?
+\end{itemize}
+
+\section{Practical Exercise}
+
+\textbf{Exercise 10.1: Design Your Hybrid Architecture}
+
+For your deployment scenario:
+
+\begin{enumerate}
+    \item Identify which pattern(s) apply:
+    \begin{itemize}
+        \item Pattern 1: Temporal constraints?
+        \item Pattern 2: Rule verification?
+        \item Pattern 3: Factual grounding?
+    \end{itemize}
+
+    \item Define component responsibilities:
+    \begin{itemize}
+        \item What does the LLM handle?
+        \item What does the symbolic component handle?
+    \end{itemize}
+
+    \item Design the interface:
+    \begin{itemize}
+        \item What data flows between components?
+        \item What errors can occur?
+        \item How are errors handled?
+    \end{itemize}
+
+    \item Create an architecture diagram showing data flow
+\end{enumerate}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item \textbf{Hybrid architectures compensate for LLM limitations.} When testing reveals fundamental failures, add symbolic components rather than tuning prompts.
+
+    \item \textbf{Three core patterns cover most use cases:}
+    \begin{itemize}
+        \item LLM + Temporal Checker
+        \item LLM + Verification Module
+        \item LLM + Retrieval (RAG)
+    \end{itemize}
+
+    \item \textbf{Clear responsibility separation is essential.} LLMs handle language; symbolic components handle logic.
+
+    \item \textbf{Interface design determines reliability.} Structured, validated, logged interfaces prevent cascading failures.
+
+    \item \textbf{Test the complete system.} Unit tests alone miss integration failures.
+\end{enumerate}
+
+\section{Reading for Next Session}
+
+\begin{itemize}
+    \item Lewis et al. (2020). ``Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.'' \textit{NeurIPS}.
+    \item Gao et al. (2023). ``Retrieval-Augmented Generation for Large Language Models: A Survey.'' \textit{arXiv}.
+\end{itemize}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{Session 10 of 12 --- Production LLM Deployment: Risk Characterization Before Failure}
+
+\end{document}

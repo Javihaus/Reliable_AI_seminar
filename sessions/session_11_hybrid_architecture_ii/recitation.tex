@@ -1,0 +1,92 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\usepackage{listings}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+
+\newtcolorbox{keyinsight}{colback=blue!5!white,colframe=keypoint,title=Key Insight,fonttitle=\bfseries}
+
+\lstset{basicstyle=\ttfamily\small,breaklines=true,frame=single}
+
+\title{\textbf{Session 11: Hybrid Architecture II}\\
+\large Integration Patterns}
+\author{Production LLM Deployment\\Instructor: Javier Mar\'in}
+\date{February 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This recitation covers implementation patterns for integrating LLM and symbolic components into working hybrid systems.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Integration Patterns}
+
+\subsection{Pattern 1: RAG}
+
+Retrieval-Augmented Generation grounds LLM responses in factual documents.
+
+\begin{lstlisting}
+Query -> Retriever -> Context -> LLM -> Grounded Response
+\end{lstlisting}
+
+\textbf{Use when:} Factual accuracy is critical, hallucination is unacceptable.
+
+\subsection{Pattern 2: LLM + Constraint Solver}
+
+\begin{lstlisting}
+Input -> LLM (extract) -> Solver -> Validated Solution
+\end{lstlisting}
+
+\textbf{Use when:} Task involves constraints (scheduling, resource allocation).
+
+\subsection{Pattern 3: LLM + Verifier}
+
+\begin{lstlisting}
+Input -> LLM (generate) -> Verifier -> Accept/Reject
+\end{lstlisting}
+
+\textbf{Use when:} Outputs must comply with rules or regulations.
+
+\section{Implementation Guidelines}
+
+\begin{enumerate}
+    \item Design clear interfaces between components
+    \item Handle errors at boundaries
+    \item Log all interactions for debugging
+    \item Test each component independently first
+    \item Integration test the full pipeline
+\end{enumerate}
+
+\section{Testing Hybrid Systems}
+
+\begin{keyinsight}
+Always compare hybrid system performance against LLM-only baseline. The hybrid must demonstrably address the identified failure mode.
+\end{keyinsight}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item Three core patterns cover most use cases
+    \item Clear interfaces are essential
+    \item Test hybrid vs baseline to prove value
+    \item Document integration decisions
+\end{enumerate}
+
+\vspace{1cm}
+\hrule
+\textit{Session 11 of 12 --- Production LLM Deployment}
+
+\end{document}

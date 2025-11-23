@@ -1,0 +1,265 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+\definecolor{success}{RGB}{0,153,0}
+
+\newtcolorbox{keyinsight}{
+  colback=blue!5!white,
+  colframe=keypoint,
+  title=Key Insight,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{warningbox}{
+  colback=red!5!white,
+  colframe=warning,
+  title=Critical Finding,
+  fonttitle=\bfseries
+}
+
+\title{\textbf{Session 4: Experimental Design II}\\
+\large Statistical Analysis and Causal Testing}
+\author{Production LLM Deployment: Risk Characterization Before Failure\\
+Instructor: Javier Mar\'in}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This recitation covers rigorous statistical analysis methods for LLM evaluation. We examine techniques for detecting bimodal performance distributions, quantifying prompt brittleness with confidence intervals, measuring systematic bias rates, and understanding causal intervention approaches.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction: Beyond Simple Accuracy}
+
+Simple accuracy metrics hide critical failure patterns:
+\begin{itemize}
+    \item A model with 50\% accuracy could have 100\% false positive rate
+    \item High average accuracy may mask bimodal distribution
+    \item Format-specific failures are invisible in aggregate metrics
+\end{itemize}
+
+\begin{warningbox}
+\textbf{The Accuracy Trap:} Never report only overall accuracy. Always decompose by category, format, and error type.
+\end{warningbox}
+
+\section{Bimodal Distribution Detection}
+
+\subsection{Why Bimodality Matters}
+
+LLM performance on specific tasks often shows bimodal distributions:
+\begin{itemize}
+    \item Models cluster into ``capable'' and ``incapable'' groups
+    \item Scaling does not produce continuous improvement
+    \item Task requires architectural features that some models have/lack
+\end{itemize}
+
+\subsection{Detecting Bimodality}
+
+\textbf{Bimodality Coefficient (Sarle's):}
+\[
+BC = \frac{\gamma^2 + 1}{\kappa + \frac{3(n-1)^2}{(n-2)(n-3)}}
+\]
+
+Where $\gamma$ is skewness and $\kappa$ is kurtosis.
+
+\begin{itemize}
+    \item $BC > 0.555$ suggests bimodality
+    \item Also use visual inspection (histograms)
+    \item Hartigan's dip test for formal testing
+\end{itemize}
+
+\begin{keyinsight}
+Bimodal distributions indicate that task performance depends on specific architectural features, not just scale. Models either have the required mechanism or they don't.
+\end{keyinsight}
+
+\section{Brittleness Quantification}
+
+\subsection{Definition}
+
+\textbf{Brittleness} = Maximum accuracy - Minimum accuracy across prompt formats
+
+\subsection{Interpretation Scale}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcl}
+\toprule
+\textbf{Brittleness} & \textbf{Range} & \textbf{Interpretation} \\
+\midrule
+Low & 0-10 pp & Robust understanding \\
+Medium & 10-30 pp & Some format sensitivity \\
+High & 30-50 pp & Significant pattern matching \\
+Extreme & 50+ pp & Pure surface pattern matching \\
+\bottomrule
+\end{tabular}
+\caption{Brittleness interpretation scale}
+\end{table}
+
+\subsection{Confidence Intervals}
+
+For brittleness estimates, use bootstrap confidence intervals:
+
+\begin{enumerate}
+    \item Resample results with replacement (1000+ iterations)
+    \item Calculate brittleness for each sample
+    \item Report 95\% CI as 2.5th and 97.5th percentiles
+\end{enumerate}
+
+\section{Bias Rate Measurement}
+
+\subsection{Error Type Taxonomy}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|cc}
+ & \textbf{Predicted YES} & \textbf{Predicted NO} \\
+\midrule
+\textbf{Actual YES} & True Positive (TP) & False Negative (FN) \\
+\textbf{Actual NO} & False Positive (FP) & True Negative (TN) \\
+\end{tabular}
+\caption{Confusion matrix}
+\end{table}
+
+\subsection{Key Metrics}
+
+\textbf{False Positive Rate (FPR):}
+\[
+FPR = \frac{FP}{FP + TN}
+\]
+
+\textbf{False Negative Rate (FNR):}
+\[
+FNR = \frac{FN}{FN + TP}
+\]
+
+\begin{warningbox}
+\textbf{Action Bias:} Our experiments show 100\% FPR for some models on temporal tasks. They always recommend action even when unsafe. This is catastrophic for high-stakes applications.
+\end{warningbox}
+
+\subsection{Which Error Matters More?}
+
+Depends on application:
+\begin{itemize}
+    \item \textbf{Medical:} FP (unsafe action) often worse than FN (missed opportunity)
+    \item \textbf{Security:} FN (missed threat) often worse than FP (false alarm)
+    \item \textbf{Financial:} Depends on specific compliance requirements
+\end{itemize}
+
+\section{Statistical Significance Testing}
+
+\subsection{McNemar's Test}
+
+For comparing paired nominal data (same scenarios, different formats):
+
+\[
+\chi^2 = \frac{(|b - c| - 1)^2}{b + c}
+\]
+
+Where:
+\begin{itemize}
+    \item $b$ = Format A correct, Format B wrong
+    \item $c$ = Format A wrong, Format B correct
+\end{itemize}
+
+\subsection{When to Use}
+
+\begin{enumerate}
+    \item Comparing two formats on same scenarios
+    \item Comparing two models on same scenarios
+    \item Before/after prompt modification comparisons
+\end{enumerate}
+
+\section{Causal Interventions}
+
+\subsection{Beyond Correlation}
+
+Behavioral experiments show \textit{what} fails. Causal interventions reveal \textit{why}.
+
+\subsection{Intervention Types}
+
+\begin{enumerate}
+    \item \textbf{Attention manipulation:} Modify attention patterns during inference
+    \item \textbf{Activation patching:} Replace activations from one input with another
+    \item \textbf{Ablation studies:} Remove components and measure degradation
+    \item \textbf{Probing:} Train classifiers on internal representations
+\end{enumerate}
+
+\begin{keyinsight}
+Causal interventions require model access (weights, activations). For API-only models, behavioral experiments are the primary diagnostic tool.
+\end{keyinsight}
+
+\section{Practical Exercise}
+
+\textbf{Exercise 4.1: Complete Statistical Analysis}
+
+Using your test results from Session 3:
+
+\begin{enumerate}
+    \item \textbf{Bimodality test:} Plot histogram of accuracies across models/runs. Calculate bimodality coefficient.
+
+    \item \textbf{Brittleness quantification:}
+    \begin{itemize}
+        \item Calculate max-min accuracy across formats
+        \item Bootstrap 95\% confidence interval
+        \item Interpret using the scale provided
+    \end{itemize}
+
+    \item \textbf{Bias rate measurement:}
+    \begin{itemize}
+        \item Construct confusion matrix
+        \item Calculate FPR and FNR
+        \item Identify systematic biases
+    \end{itemize}
+
+    \item \textbf{Significance testing:}
+    \begin{itemize}
+        \item Compare your best vs worst format
+        \item Run McNemar's test
+        \item Report p-value and conclusion
+    \end{itemize}
+\end{enumerate}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item \textbf{Bimodal distributions indicate architectural requirements.} Performance clustering means capability depends on specific features, not scale.
+
+    \item \textbf{Brittleness quantifies pattern matching.} High brittleness (>30pp) indicates surface pattern matching rather than robust understanding.
+
+    \item \textbf{Bias rates matter more than accuracy.} A 100\% FPR is catastrophic regardless of overall accuracy.
+
+    \item \textbf{Test for significance.} Small differences may not be meaningful.
+
+    \item \textbf{Visualize distributions.} Many patterns are obvious visually but hidden in summary statistics.
+\end{enumerate}
+
+\section{Reading for Next Session}
+
+\begin{itemize}
+    \item Allen, J. F. (1983). ``Maintaining knowledge about temporal intervals.'' \textit{Communications of the ACM}.
+    \item Review your test results---we will apply them to temporal constraint analysis
+\end{itemize}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{Session 4 of 12 --- Production LLM Deployment: Risk Characterization Before Failure}
+
+\end{document}

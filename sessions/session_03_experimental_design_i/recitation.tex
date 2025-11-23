@@ -1,0 +1,279 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+\definecolor{success}{RGB}{0,153,0}
+
+\newtcolorbox{keyinsight}{
+  colback=blue!5!white,
+  colframe=keypoint,
+  title=Key Insight,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{warningbox}{
+  colback=red!5!white,
+  colframe=warning,
+  title=Warning,
+  fonttitle=\bfseries
+}
+
+\title{\textbf{Session 3: Experimental Design I}\\
+\large Constructing Diagnostic Scenarios}
+\author{Production LLM Deployment: Risk Characterization Before Failure\\
+Instructor: Javier Mar\'in}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This recitation teaches the construction of diagnostic test scenarios that reveal production failure modes before deployment. Well-designed experiments distinguish genuine capability from brittle pattern matching, enabling informed deployment decisions.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction: Why Experimental Design Matters}
+
+Standard benchmarks measure average performance on curated datasets. Production systems encounter:
+\begin{itemize}
+    \item Edge cases outside training distributions
+    \item Novel combinations of known elements
+    \item Format variations from different users
+    \item Adversarial or confusing inputs
+\end{itemize}
+
+\begin{warningbox}
+\textbf{The Benchmark Trap:} High benchmark scores do not predict production reliability. Diagnostic experiments reveal failure modes that benchmarks miss.
+\end{warningbox}
+
+\section{Balanced Test Distributions}
+
+\subsection{The Problem with Unbalanced Data}
+
+Consider a binary classification task with 90\% positive cases:
+\begin{itemize}
+    \item A model that always predicts ``positive'' achieves 90\% accuracy
+    \item This hides complete failure on negative cases
+    \item Production systems may encounter more negative cases
+\end{itemize}
+
+\begin{keyinsight}
+Always use balanced test distributions (50/50 for binary, equal splits for multi-class) to reveal true performance on all categories.
+\end{keyinsight}
+
+\subsection{Balancing Strategies}
+
+\begin{enumerate}
+    \item \textbf{Equal counts:} Same number of examples per category
+    \item \textbf{Stratified sampling:} Proportional sampling from larger pools
+    \item \textbf{Synthetic generation:} Create additional examples for minority classes
+    \item \textbf{Oversampling:} Duplicate minority examples (for training only)
+\end{enumerate}
+
+\section{Controlling for Confounds}
+
+\subsection{Isolating Variables}
+
+Good experiments isolate the variable of interest:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Variable} & \textbf{How to Control} \\
+\midrule
+Semantic content & Keep meaning identical across tests \\
+Surface format & Vary format systematically \\
+Complexity & Group by number of entities/constraints \\
+Length & Match token counts across conditions \\
+\bottomrule
+\end{tabular}
+\caption{Controlling experimental variables}
+\end{table}
+
+\subsection{Multi-Format Testing}
+
+The same semantic content should be tested in multiple formats:
+
+\begin{enumerate}
+    \item \textbf{Natural language:} Conversational, informal
+    \item \textbf{Clinical/formal:} Domain-specific terminology
+    \item \textbf{Structured:} JSON, XML, or tabular format
+    \item \textbf{Conversational:} Chat-like, with filler words
+    \item \textbf{Technical:} Specification or documentation style
+\end{enumerate}
+
+\begin{keyinsight}
+If accuracy varies significantly across formats for the same semantic content, the model is pattern matching on surface features rather than understanding the underlying meaning.
+\end{keyinsight}
+
+\section{Establishing Ground Truth}
+
+\subsection{Requirements for Ground Truth}
+
+Ground truth must be:
+\begin{itemize}
+    \item \textbf{Deterministic:} One correct answer, no ambiguity
+    \item \textbf{Verifiable:} Can be checked by computation or expert review
+    \item \textbf{Independent:} Not derived from model outputs
+\end{itemize}
+
+\subsection{Ground Truth Sources}
+
+\begin{enumerate}
+    \item \textbf{Computation:} Mathematical or logical derivation
+    \item \textbf{Expert annotation:} Domain specialist review
+    \item \textbf{Reference databases:} Authoritative sources
+    \item \textbf{Simulation:} Deterministic system outputs
+\end{enumerate}
+
+\section{Test Scenario Design}
+
+\subsection{Scenario Components}
+
+Each test scenario should include:
+\begin{enumerate}
+    \item \textbf{ID:} Unique identifier
+    \item \textbf{Description:} What the scenario tests
+    \item \textbf{Ground truth:} Correct answer
+    \item \textbf{Category:} Positive/negative/edge case
+    \item \textbf{Difficulty:} Easy/medium/hard
+    \item \textbf{Formats:} Multiple prompt variations
+\end{enumerate}
+
+\subsection{Example: Medication Timing Scenario}
+
+\begin{tcolorbox}
+\textbf{ID:} MED-001
+
+\textbf{Description:} Aspirin taken at 8:00 AM, ibuprofen requested at 11:00 AM, 4-hour minimum required
+
+\textbf{Ground Truth:} NO (only 3 hours elapsed)
+
+\textbf{Category:} Negative (unsafe)
+
+\textbf{Difficulty:} Easy
+
+\textbf{Formats:}
+\begin{itemize}
+    \item Natural: ``I took aspirin at 8 AM. Can I take ibuprofen at 11 AM? (4-hour wait needed)''
+    \item Clinical: ``Med A: 0800h. Med B requested: 1100h. Interval req: 4h. Safe?''
+    \item JSON: \texttt{\{``med\_a'': ``8:00 AM'', ``med\_b'': ``11:00 AM'', ``gap'': 4\}}
+\end{itemize}
+\end{tcolorbox}
+
+\section{Case Study: Temporal Constraint Testing}
+
+\subsection{Test Suite Design}
+
+Our temporal constraint test suite includes:
+\begin{itemize}
+    \item 8 scenarios (4 positive, 4 negative)
+    \item 5 format variations per scenario
+    \item 3 difficulty levels
+    \item Deterministic ground truth from temporal math
+\end{itemize}
+
+\subsection{Results Summary}
+
+Testing across 8 LLMs revealed:
+\begin{itemize}
+    \item Bimodal performance (62.5\% or 37.5\%, not continuous)
+    \item Up to 62.5 percentage point accuracy drops across formats
+    \item 100\% false positive rates on negative cases for some models
+\end{itemize}
+
+\section{Metrics to Collect}
+
+\subsection{Primary Metrics}
+
+\begin{enumerate}
+    \item \textbf{Accuracy:} Proportion of correct answers
+    \item \textbf{False Positive Rate:} Incorrect ``yes'' on negative cases
+    \item \textbf{False Negative Rate:} Incorrect ``no'' on positive cases
+    \item \textbf{Brittleness:} Max-min accuracy across formats
+\end{enumerate}
+
+\subsection{Secondary Metrics}
+
+\begin{enumerate}
+    \item \textbf{Consistency:} Same answer across formats
+    \item \textbf{Confidence calibration:} Does stated confidence match accuracy?
+    \item \textbf{Response latency:} Time to generate answer
+    \item \textbf{Token efficiency:} Tokens needed for correct answer
+\end{enumerate}
+
+\section{Practical Exercise}
+
+\textbf{Exercise 3.1: Design Your Test Suite}
+
+\begin{enumerate}
+    \item Identify your deployment domain
+    \item Define 8-12 test scenarios (balanced positive/negative)
+    \item Establish ground truth for each
+    \item Write each scenario in 3+ formats
+    \item Document the evaluation protocol
+\end{enumerate}
+
+\textbf{Template for Each Scenario:}
+
+\begin{tcolorbox}
+\textbf{ID:} [Unique identifier]
+
+\textbf{Description:} [What this tests]
+
+\textbf{Ground Truth:} [Correct answer and reasoning]
+
+\textbf{Category:} [positive/negative/edge\_case]
+
+\textbf{Difficulty:} [easy/medium/hard]
+
+\textbf{Format 1 (natural):} [Prompt text]
+
+\textbf{Format 2 (formal):} [Prompt text]
+
+\textbf{Format 3 (structured):} [Prompt text]
+\end{tcolorbox}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item \textbf{Balanced test sets reveal true performance.} Unbalanced distributions hide failures behind high accuracy numbers.
+
+    \item \textbf{Multi-format testing reveals brittleness.} Same semantics, different formats exposes pattern matching.
+
+    \item \textbf{Ground truth must be deterministic.} Ambiguous ground truth makes evaluation meaningless.
+
+    \item \textbf{Collect multiple metrics.} Accuracy alone doesn't capture failure modes.
+
+    \item \textbf{Design before testing.} Systematic experimental design prevents post-hoc rationalization.
+\end{enumerate}
+
+\section{Reading for Next Session}
+
+\begin{itemize}
+    \item Review statistical testing fundamentals (t-tests, chi-square)
+    \item Read about bimodal distributions and their interpretation
+    \item Prepare your test scenarios for statistical analysis
+\end{itemize}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{Session 3 of 12 --- Production LLM Deployment: Risk Characterization Before Failure}
+
+\end{document}

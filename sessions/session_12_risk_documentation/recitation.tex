@@ -1,0 +1,123 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+
+\newtcolorbox{keyinsight}{colback=blue!5!white,colframe=keypoint,title=Key Insight,fonttitle=\bfseries}
+\newtcolorbox{warningbox}{colback=red!5!white,colframe=warning,title=Important,fonttitle=\bfseries}
+
+\title{\textbf{Session 12: Risk Documentation}\\
+\large Production Deployment and Regulatory Compliance}
+\author{Production LLM Deployment\\Instructor: Javier Mar\'in}
+\date{February 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This final recitation covers documenting LLM deployments for regulatory compliance and stakeholder communication. Complete documentation is essential for responsible AI deployment.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Documentation Requirements}
+
+\subsection{Complete Package Contents}
+
+\begin{enumerate}
+    \item Executive summary
+    \item Capability classification matrix
+    \item Failure mode analysis
+    \item Risk assessment
+    \item Hybrid architecture specification
+    \item Production monitoring plan
+    \item Regulatory compliance checklist
+\end{enumerate}
+
+\section{EU AI Act Compliance}
+
+\begin{warningbox}
+\textbf{Deadline:} August 2026 for high-risk AI systems. Ensure documentation is complete.
+\end{warningbox}
+
+\subsection{Key Requirements}
+
+\begin{itemize}
+    \item Risk classification documentation
+    \item Human oversight mechanisms
+    \item Transparency and user notification
+    \item Technical documentation
+    \item Accuracy and robustness metrics
+    \item Bias assessment
+\end{itemize}
+
+\section{Stakeholder Communication}
+
+Different audiences need different information:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Audience} & \textbf{Focus} \\
+\midrule
+Technical teams & Full methodology, code, results \\
+Management & Business impact, risk summary \\
+Regulators & Compliance documentation \\
+Users & Clear capability statements \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Production Monitoring}
+
+\subsection{Key Metrics}
+
+\begin{enumerate}
+    \item False positive/negative rates
+    \item Response latency
+    \item User escalation rates
+    \item Model drift indicators
+\end{enumerate}
+
+\begin{keyinsight}
+Deployment is not the end. Continuous monitoring ensures the system continues to perform as documented.
+\end{keyinsight}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item Documentation is required, not optional
+    \item Quantify all claims with metrics
+    \item Tailor communication to stakeholder needs
+    \item Plan for continuous monitoring
+    \item Prepare for regulatory audits
+\end{enumerate}
+
+\section{Course Summary}
+
+This course taught systematic methodology for:
+\begin{itemize}
+    \item Classifying LLM capabilities
+    \item Detecting failure modes before deployment
+    \item Designing hybrid architectures
+    \item Documenting risks for stakeholders
+\end{itemize}
+
+Apply these skills to deploy LLMs responsibly and safely.
+
+\vspace{1cm}
+\hrule
+\textit{Session 12 of 12 --- Production LLM Deployment: Risk Characterization Before Failure}
+
+\end{document}

@@ -1,0 +1,293 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\definecolor{keypoint}{RGB}{0,102,204}
+\definecolor{warning}{RGB}{204,0,0}
+\definecolor{success}{RGB}{0,153,0}
+
+\newtcolorbox{keyinsight}{
+  colback=blue!5!white,
+  colframe=keypoint,
+  title=Key Insight,
+  fonttitle=\bfseries
+}
+
+\newtcolorbox{warningbox}{
+  colback=red!5!white,
+  colframe=warning,
+  title=Warning,
+  fonttitle=\bfseries
+}
+
+\title{\textbf{Session 2: Architectural Prerequisites}\\
+\large Why Next-Token Prediction Fails}
+\author{Production LLM Deployment: Risk Characterization Before Failure\\
+Instructor: Javier Mar\'in}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This recitation examines why next-token prediction on discrete tokens succeeds for certain tasks but fundamentally fails for others. Understanding these architectural prerequisites is essential for determining whether your deployment scenario can succeed with current LLM architectures or requires hybrid approaches.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction: The Representation Problem}
+
+Large language models process discrete tokens. This architectural choice determines their capabilities and limitations.
+
+\begin{warningbox}
+\textbf{The Fundamental Constraint:} Discrete tokens can \textit{represent} continuous quantities (``4.5 hours'') but cannot \textit{process} them as continuous values. The string ``4.5'' has no inherent magnitude in a token embedding.
+\end{warningbox}
+
+\section{Discrete vs Continuous Representations}
+
+\subsection{When Discrete Works}
+
+Discrete representations succeed when:
+\begin{itemize}
+    \item The task involves symbol manipulation
+    \item Categories are sufficient (not quantities)
+    \item Patterns in training data transfer to the task
+    \item Exact numerical precision is not required
+\end{itemize}
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Text classification
+    \item Named entity recognition
+    \item Language translation
+    \item Code completion (common patterns)
+\end{itemize}
+
+\subsection{When Continuous Is Required}
+
+Continuous representations are required when:
+\begin{itemize}
+    \item Tasks involve magnitudes and quantities
+    \item Precise arithmetic is necessary
+    \item Temporal durations must be computed
+    \item Physical quantities must be simulated
+\end{itemize}
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Scheduling and temporal constraints
+    \item Financial calculations
+    \item Physical simulation
+    \item Resource allocation
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Task Type} & \textbf{Representation} & \textbf{LLM Fit} \\
+\midrule
+Text completion & Discrete & Excellent \\
+Classification & Discrete & Good \\
+Translation & Discrete & Good \\
+Arithmetic & Continuous & Poor \\
+Temporal reasoning & Continuous & Very Poor \\
+Physical simulation & Continuous & Very Poor \\
+\bottomrule
+\end{tabular}
+\caption{Task types and representation requirements}
+\end{table}
+
+\section{Pattern Matching vs Computational Processes}
+
+\subsection{What LLMs Actually Do}
+
+LLMs perform sophisticated pattern matching against their training data. They do \textit{not} perform computational processes in the way traditional algorithms do.
+
+\begin{keyinsight}
+High accuracy on common examples demonstrates pattern matching against training data, not computational capability. Novel inputs that fall outside training patterns will fail unpredictably.
+\end{keyinsight}
+
+\subsection{Pattern Matching Characteristics}
+
+\begin{itemize}
+    \item Works well on frequent patterns
+    \item Degrades on novel combinations
+    \item Sensitive to surface form (prompt brittleness)
+    \item Cannot guarantee consistent behavior
+\end{itemize}
+
+\subsection{Computational Process Characteristics}
+
+\begin{itemize}
+    \item Works on any valid input
+    \item Generalizes systematically
+    \item Insensitive to surface form
+    \item Guarantees consistent behavior
+\end{itemize}
+
+\section{Compositional Generalization}
+
+\subsection{The Lake \& Baroni Framework}
+
+Lake \& Baroni (2018) demonstrated that sequence-to-sequence models fail to generalize compositionally. They learn correlations, not composable rules.
+
+\textbf{Key Finding:} When trained on primitives like ``dax = jump'' and ``wif = twice'', models fail to correctly interpret novel compositions like ``wif wif dax'' (should be ``jump jump jump jump'').
+
+\begin{warningbox}
+This failure persists in modern LLMs. They approximate compositional behavior when patterns are frequent in training data, but fail on truly novel compositions.
+\end{warningbox}
+
+\subsection{Implications for Deployment}
+
+If your application requires:
+\begin{itemize}
+    \item Systematic rule application
+    \item Novel combinations of learned primitives
+    \item Logical inference chains
+    \item Algorithm design
+\end{itemize}
+
+Then pure LLM deployment is \textbf{not appropriate}.
+
+\section{Biological Existence Proofs}
+
+Nature demonstrates that reliable temporal and quantitative reasoning requires specialized mechanisms.
+
+\subsection{Hippocampal Time Cells}
+
+\textbf{Function:} Neurons that fire at specific temporal intervals during a delay period.
+
+\textbf{Mechanism:} Sequential activation creates a neural ``clock'' encoding elapsed time.
+
+\textbf{Key Point:} This is a computational mechanism, not pattern matching on temporal language.
+
+\subsection{Cerebellar Timing Circuits}
+
+\textbf{Function:} Precise sub-second timing for motor control.
+
+\textbf{Mechanism:} Parallel fiber delay lines provide physical time representation.
+
+\textbf{Key Point:} Timing precision requires dedicated neural architecture.
+
+\subsection{Interval Timing (Dopaminergic)}
+
+\textbf{Function:} Timing of seconds to minutes for decision-making.
+
+\textbf{Mechanism:} Dopamine accumulation provides continuous duration encoding.
+
+\textbf{Key Point:} Magnitude representation requires specialized circuits.
+
+\begin{keyinsight}
+Biological systems that solve temporal problems use dedicated computational mechanisms, not pattern matching. This suggests that reliable artificial temporal reasoning also requires specialized components.
+\end{keyinsight}
+
+\section{Architectural Prerequisites Framework}
+
+\subsection{Prerequisite Categories}
+
+\begin{enumerate}
+    \item \textbf{Discrete Representation}
+    \begin{itemize}
+        \item LLM provides: Yes
+        \item Suitable for: Text, categories, symbols
+    \end{itemize}
+
+    \item \textbf{Continuous Representation}
+    \begin{itemize}
+        \item LLM provides: No
+        \item Required for: Quantities, durations, magnitudes
+    \end{itemize}
+
+    \item \textbf{State Maintenance}
+    \begin{itemize}
+        \item LLM provides: Limited (context window only)
+        \item Required for: Tracking changes over time
+    \end{itemize}
+
+    \item \textbf{Compositional Generalization}
+    \begin{itemize}
+        \item LLM provides: No
+        \item Required for: Novel combinations, systematic rules
+    \end{itemize}
+
+    \item \textbf{Pattern Completion}
+    \begin{itemize}
+        \item LLM provides: Yes
+        \item Suitable for: Familiar patterns, common tasks
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Analysis Process}
+
+For any deployment scenario:
+
+\begin{enumerate}
+    \item Decompose the task into sub-capabilities
+    \item Identify required prerequisites for each
+    \item Assess whether LLMs provide each prerequisite
+    \item Identify gaps requiring hybrid components
+    \item Design appropriate hybrid architecture
+\end{enumerate}
+
+\section{Practical Exercise}
+
+\textbf{Exercise 2.1: Architectural Analysis}
+
+For your deployment scenario:
+
+\begin{enumerate}
+    \item \textbf{Task Description:} Write 2-3 sentences describing the task.
+
+    \item \textbf{Sub-capability Decomposition:} Break the task into 3-5 component capabilities.
+
+    \item \textbf{Prerequisite Mapping:} For each sub-capability, identify required prerequisites.
+
+    \item \textbf{Gap Analysis:} List prerequisites that LLMs cannot provide.
+
+    \item \textbf{Recommendation:} Based on gaps, recommend:
+    \begin{itemize}
+        \item LLM-only (no gaps)
+        \item Hybrid architecture (1-2 gaps)
+        \item Alternative approach (many gaps)
+    \end{itemize}
+\end{enumerate}
+
+\section{Key Takeaways}
+
+\begin{enumerate}
+    \item \textbf{Discrete tokens cannot process continuous quantities.} The string ``4 hours'' has no inherent temporal meaning to an LLM.
+
+    \item \textbf{Pattern matching is not computation.} High accuracy on common cases doesn't guarantee reliability on novel inputs.
+
+    \item \textbf{Compositional generalization fails.} LLMs learn correlations, not composable rules.
+
+    \item \textbf{Biology shows the way.} Reliable temporal reasoning requires dedicated mechanisms, not pattern matching.
+
+    \item \textbf{Analyze before building.} Identifying prerequisite gaps early prevents wasted engineering effort.
+\end{enumerate}
+
+\section{Reading for Next Session}
+
+\begin{itemize}
+    \item Lake, B. M., \& Baroni, M. (2018). ``Generalization without systematicity: On the compositional skills of sequence-to-sequence recurrent networks.'' \textit{ICML}.
+    \item Review your capability classification from Session 1
+\end{itemize}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{Session 2 of 12 --- Production LLM Deployment: Risk Characterization Before Failure}
+
+\end{document}
